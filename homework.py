@@ -1,4 +1,4 @@
-"""
+"""Telegram-бот.
 Telegram-бот, который обращается к API сервиса Практикум.Домашка и узнавает
 статус вашей домашней работы: взята ли ваша домашка в ревью, проверена ли она,
 а если проверена — то принял её ревьюер или вернул на доработку.
@@ -42,9 +42,7 @@ logging.basicConfig(
 
 
 def send_message(bot: telegram.Bot, message: str) -> None:
-    """
-    Функция отправляет сообщение в Telegram чат, определяемый переменной
-    окружения TELEGRAM_CHAT_ID.
+    """Функция отправляет сообщение в Telegram чат.
 
     Параметры:
     bot (telegram.Bot) - бот, осуществляющий отправку сообщения
@@ -61,9 +59,7 @@ def send_message(bot: telegram.Bot, message: str) -> None:
 
 
 def get_api_answer(current_timestamp: int) -> dict:
-    """
-    Функция делает запрос к единственному эндпоинту API-сервиса
-    Практикум.Домашка.
+    """Функция делает запрос к API-сервиса Практикум.Домашка.
 
     Параметры:
     current_timestamp (int) - временная метка
@@ -82,8 +78,7 @@ def get_api_answer(current_timestamp: int) -> dict:
 
 
 def check_response(response: Optional[dict]) -> Optional[list]:
-    """
-    Функция проверяет ответ API на корректность.
+    """Функция проверяет ответ API на корректность.
 
     Параметры:
     response (dict) - ответ сервера
@@ -91,7 +86,6 @@ def check_response(response: Optional[dict]) -> Optional[list]:
     Возвращает:
     list - список домашних работ.
     """
-
     if not isinstance(response, dict):
         raise InvalidResponse("Ответ не приведен к типу dict")
     if response.get("error"):
@@ -106,9 +100,7 @@ def check_response(response: Optional[dict]) -> Optional[list]:
 
 
 def parse_status(homework: dict) -> str:
-    """
-    Функция извлекает из информации о конкретной домашней работе
-    статус этой работы.
+    """Функция извлекает из информацию о статусе работы.
 
     Параметры:
 
@@ -130,9 +122,7 @@ def parse_status(homework: dict) -> str:
 
 
 def check_tokens() -> bool:
-    """
-    Функция проверяет доступность переменных окружения, которые
-    необходимы для работы программы.
+    """Функция проверяет доступность переменных окружения.
 
     Параметры:
     None
@@ -148,20 +138,16 @@ def check_tokens() -> bool:
 
 def main():
     """Основная логика работы бота."""
-    try:
-        if not check_tokens():
-            raise VariableNotDefined()
-    except VariableNotDefined:
+    if not check_tokens():
         if not PRACTICUM_TOKEN:
-            logging.critical("Отсутствует обязательная переменная окружения:"
-                             " 'PRACTICUM_TOKEN'")
+            raise VariableNotDefined("Отсутствует обязательная переменная"
+                                     " окружения:'PRACTICUM_TOKEN'")
         elif not TELEGRAM_TOKEN:
-            logging.critical("Отсутствует обязательная переменная окружения:"
-                             " 'TELEGRAM_TOKEN'")
+            raise VariableNotDefined("Отсутствует обязательная переменная"
+                                     " окружения: 'TELEGRAM_TOKEN'")
         else:
-            logging.critical("Отсутствует обязательная переменная окружения:"
-                             " 'TELEGRAM_CHAT_ID'")
-        logging.critical("Программа принудительно остановлена.")
+            raise VariableNotDefined("Отсутствует обязательная переменная"
+                                     " окружения: 'TELEGRAM_CHAT_ID'")
     else:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
         current_timestamp = int(time.time())
