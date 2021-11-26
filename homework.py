@@ -1,15 +1,10 @@
-"""Telegram-бот.
-Telegram-бот, который обращается к API сервиса Практикум.Домашка и узнавает
-статус вашей домашней работы: взята ли ваша домашка в ревью, проверена ли она,
-а если проверена — то принял её ревьюер или вернул на доработку.
-"""
-from typing import Optional
 import logging
 import os
 import sys
 import time
 from exceptions import (EndpointError, InvalidResponse, InvalidStatusCode,
                         KeyNotFind, VariableNotDefined)
+from typing import Optional
 
 import requests
 
@@ -54,7 +49,7 @@ def send_message(bot: telegram.Bot, message: str) -> None:
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logging.info(f"Бот отправил сообщение \"{message}\"")
-    except telegram.e as error:
+    except telegram.error.TelegramError as error:
         logging.error(f'Ошибка при отправки сообщения: {error}')
 
 
@@ -72,7 +67,7 @@ def get_api_answer(current_timestamp: int) -> dict:
     response = requests.get(ENDPOINT, headers=HEADERS, params=params)
     if response.status_code != 200:
         raise InvalidStatusCode(f"Ошибка сервера. Статус -"
-                                f"{response.status_code}")
+                                f" {response.status_code}")
     response = response.json()
     return response
 
@@ -88,9 +83,9 @@ def check_response(response: Optional[dict]) -> Optional[list]:
     """
     if not isinstance(response, dict):
         raise InvalidResponse("Ответ не приведен к типу dict")
-    if response.get("error"):
+    if 'error' in response:
         raise EndpointError(response["error"]["error"])
-    if "homeworks" not in response.keys():
+    if "homeworks" not in response:
         raise KeyNotFind("В переданном ответе отсутствует"
                          " атрибут \"homeworks\"")
     if not isinstance(response.get('homeworks'), list):
@@ -109,13 +104,13 @@ def parse_status(homework: dict) -> str:
     """
     homework_name = homework.get('homework_name')
     homework_status = homework.get('status')
-    if ('homework_name' not in homework.keys()):
+    if ('homework_name' not in homework):
         raise KeyNotFind("В переданном элементе отсутствует"
                          " атрибут \"homework_name\"")
-    if ('status' not in homework.keys()):
+    if ('status' not in homework):
         raise KeyNotFind("В переданном элементе отсутствует"
                          " атрибут \"status\"")
-    if (homework_status not in HOMEWORK_STATUSES.keys()):
+    if (homework_status not in HOMEWORK_STATUSES):
         raise KeyNotFind(f"Неизвестный статус работы: {homework_status}")
     verdict = HOMEWORK_STATUSES[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -133,38 +128,42 @@ def check_tokens() -> bool:
     if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
         logging.info("Переменные среды заданы.")
         return True
+    if not PRACTICUM_TOKEN:
+        logging.critical("Отсутствует обязательная переменная"
+                         " окружения:'PRACTICUM_TOKEN'")
+    if not TELEGRAM_TOKEN:
+        logging.critical("Отсутствует обязательная переменная"
+                         " окружения: 'TELEGRAM_TOKEN'")
+    if not TELEGRAM_CHAT_ID:
+        logging.critical("Отсутствует обязательная переменная"
+                         " окружения: 'TELEGRAM_CHAT_ID'")
     return False
 
 
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
-        if not PRACTICUM_TOKEN:
-            raise VariableNotDefined("Отсутствует обязательная переменная"
-                                     " окружения:'PRACTICUM_TOKEN'")
-        elif not TELEGRAM_TOKEN:
-            raise VariableNotDefined("Отсутствует обязательная переменная"
-                                     " окружения: 'TELEGRAM_TOKEN'")
-        else:
-            raise VariableNotDefined("Отсутствует обязательная переменная"
-                                     " окружения: 'TELEGRAM_CHAT_ID'")
-    else:
-        bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        current_timestamp = int(time.time())
-        while True:
-            try:
-                response = get_api_answer(current_timestamp)
-                homeworks = check_response(response)
-                if not homeworks:
-                    logging.debug("Новые статусы отсутствуют.")
-                for homework in homeworks:
-                    send_message(bot, parse_status(homework))
-                current_timestamp = int(time.time())
-                time.sleep(RETRY_TIME)
-            except Exception as error:
-                message = f'Сбой в работе программы: {error}'
-                logging.error(message)
-                time.sleep(RETRY_TIME)
+        raise VariableNotDefined("Не заданы переменные окружения.")
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    current_timestamp = int(time.time())
+    error_message = ''
+    while True:
+        try:
+            response = get_api_answer(current_timestamp)
+            homeworks = check_response(response)
+            if not homeworks:
+                logging.debug("Новые статусы отсутствуют.")
+            for homework in homeworks:
+                send_message(bot, parse_status(homework))
+            current_timestamp = response['current_date']
+        except Exception as error:
+            message = f'Сбой в работе программы: {error}'
+            logging.error(message)
+            if error_message != message:
+                send_message(bot, message)
+                error_message = message
+        finally:
+            time.sleep(RETRY_TIME)
 
 
 if __name__ == '__main__':
