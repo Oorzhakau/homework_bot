@@ -2,37 +2,37 @@ import logging
 import os
 import sys
 import time
-from exceptions import (EndpointError, InvalidResponse, InvalidStatusCode,
-                        KeyNotFind, VariableNotDefined)
 from typing import Optional
 
 import requests
-
 import telegram
 from dotenv import load_dotenv
+
+from exceptions import (EndpointError, InvalidResponse, InvalidStatusCode,
+                        KeyNotFind, VariableNotDefined)
 
 load_dotenv()
 
 
-PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+PRACTICUM_TOKEN = os.getenv("PRACTICUM_TOKEN")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 RETRY_TIME = 600
-ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
-HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
+ENDPOINT = "https://practicum.yandex.ru/api/user_api/homework_statuses/"
+HEADERS = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
 
 
 HOMEWORK_STATUSES = {
-    'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
-    'reviewing': 'Работа взята на проверку ревьюером.',
-    'rejected': 'Работа проверена: у ревьюера есть замечания.'
+    "approved": "Работа проверена: ревьюеру всё понравилось. Ура!",
+    "reviewing": "Работа взята на проверку ревьюером.",
+    "rejected": "Работа проверена: у ревьюера есть замечания.",
 }
 
 logging.basicConfig(
-    format='%(asctime)s [%(levelname)s] %(message)s',
+    format="%(asctime)s [%(levelname)s] %(message)s",
     level=logging.DEBUG,
-    handlers=[logging.StreamHandler(stream=sys.stdout)]
+    handlers=[logging.StreamHandler(stream=sys.stdout)],
 )
 
 
@@ -48,9 +48,9 @@ def send_message(bot: telegram.Bot, message: str) -> None:
     """
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
-        logging.info(f"Бот отправил сообщение \"{message}\"")
+        logging.info(f'Бот отправил сообщение "{message}"')
     except telegram.error.TelegramError as error:
-        logging.error(f'Ошибка при отправки сообщения: {error}')
+        logging.error(f"Ошибка при отправки сообщения: {error}")
 
 
 def get_api_answer(current_timestamp: int) -> dict:
@@ -63,11 +63,12 @@ def get_api_answer(current_timestamp: int) -> dict:
     dict - ответ сервера.
     """
     timestamp = current_timestamp or int(time.time())
-    params = {'from_date': timestamp}
+    params = {"from_date": timestamp}
     response = requests.get(ENDPOINT, headers=HEADERS, params=params)
     if response.status_code != 200:
-        raise InvalidStatusCode(f"Ошибка сервера. Статус -"
-                                f" {response.status_code}")
+        raise InvalidStatusCode(
+            f"Ошибка сервера. Статус -" f" {response.status_code}"
+        )
     response = response.json()
     return response
 
@@ -83,15 +84,16 @@ def check_response(response: Optional[dict]) -> Optional[list]:
     """
     if not isinstance(response, dict):
         raise InvalidResponse("Ответ не приведен к типу dict")
-    if 'error' in response:
+    if "error" in response:
         raise EndpointError(response["error"]["error"])
     if "homeworks" not in response:
-        raise KeyNotFind("В переданном ответе отсутствует"
-                         " атрибут \"homeworks\"")
-    if not isinstance(response.get('homeworks'), list):
+        raise KeyNotFind(
+            "В переданном ответе отсутствует атрибут \"homeworks\""
+        )
+    if not isinstance(response.get("homeworks"), list):
         raise InvalidResponse("Ответ не должен быть типа list")
     logging.debug("Корректный ответ от сервера получен.")
-    return response.get('homeworks')
+    return response.get("homeworks")
 
 
 def parse_status(homework: dict) -> str:
@@ -102,15 +104,17 @@ def parse_status(homework: dict) -> str:
     Возвращает:
     str - сообщение о статусе домашней работы.
     """
-    homework_name = homework.get('homework_name')
-    homework_status = homework.get('status')
-    if ('homework_name' not in homework):
-        raise KeyNotFind("В переданном элементе отсутствует"
-                         " атрибут \"homework_name\"")
-    if ('status' not in homework):
-        raise KeyNotFind("В переданном элементе отсутствует"
-                         " атрибут \"status\"")
-    if (homework_status not in HOMEWORK_STATUSES):
+    homework_name = homework.get("homework_name")
+    homework_status = homework.get("status")
+    if "homework_name" not in homework:
+        raise KeyNotFind(
+            "В переданном элементе отсутствует атрибут \"homework_name\""
+        )
+    if "status" not in homework:
+        raise KeyNotFind(
+            "В переданном элементе отсутствует атрибут \"status\""
+        )
+    if homework_status not in HOMEWORK_STATUSES:
         raise KeyNotFind(f"Неизвестный статус работы: {homework_status}")
     verdict = HOMEWORK_STATUSES[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -125,19 +129,27 @@ def check_tokens() -> bool:
     Возвращает:
     bool - True если все переменные окружения заданы, иначе — False.
     """
-    if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
-        logging.info("Переменные среды заданы.")
-        return True
     if not PRACTICUM_TOKEN:
-        logging.critical("Отсутствует обязательная переменная"
-                         " окружения:'PRACTICUM_TOKEN'")
+        logging.critical(
+            "Отсутствует обязательная переменная"
+            " окружения:\"PRACTICUM_TOKEN\""
+        )
+        return False
     if not TELEGRAM_TOKEN:
-        logging.critical("Отсутствует обязательная переменная"
-                         " окружения: 'TELEGRAM_TOKEN'")
+        logging.critical(
+            "Отсутствует обязательная переменная"
+            " окружения: \"TELEGRAM_TOKEN\""
+        )
+        return False
     if not TELEGRAM_CHAT_ID:
-        logging.critical("Отсутствует обязательная переменная"
-                         " окружения: 'TELEGRAM_CHAT_ID'")
-    return False
+        logging.critical(
+            "Отсутствует обязательная переменная"
+            " окружения: \"TELEGRAM_CHAT_ID\""
+        )
+        return False
+
+    logging.info("Переменные среды заданы.")
+    return True
 
 
 def main():
@@ -146,7 +158,7 @@ def main():
         raise VariableNotDefined("Не заданы переменные окружения.")
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
-    error_message = ''
+    error_message = ""
     while True:
         try:
             response = get_api_answer(current_timestamp)
@@ -155,9 +167,10 @@ def main():
                 logging.debug("Новые статусы отсутствуют.")
             for homework in homeworks:
                 send_message(bot, parse_status(homework))
-            current_timestamp = response['current_date']
+            current_timestamp = response["current_date"]
+            error_message = ""
         except Exception as error:
-            message = f'Сбой в работе программы: {error}'
+            message = f"Сбой в работе программы: {error}"
             logging.error(message)
             if error_message != message:
                 send_message(bot, message)
@@ -166,5 +179,5 @@ def main():
             time.sleep(RETRY_TIME)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
