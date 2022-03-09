@@ -36,7 +36,7 @@ TELEGRAM_CHAT_ID = <Ваш telegram id>
 ```
 <details><summary>Help про ваш telegram id</summary>
     <br>
-    <i>Ваш telegram id можно узнать у бота @userinfobot</i>
+    <code>  Ваш <i>telegram id</i> можно узнать у бота @userinfobot</code>
 </details>
 
 Запустить проект:
