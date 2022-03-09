@@ -35,9 +35,9 @@ TELEGRAM_CHAT_ID = <Ваш telegram id>
 ```
 <details><summary>Help по токенам</summary>
     <ul>
-        <li>[Токен Практикум.Домашка](https://oauth.yandex.ru/authorize?
-response_type=token&client_id=1d0b9dd4d652455a9eb710d450ff456a)</li>
-        <li>[Токен телеграмм-бота](https://core.telegram.org/bots#6-botfather)</li>
+        <li><a href="https://oauth.yandex.ru/authorize?
+response_type=token&client_id=1d0b9dd4d652455a9eb710d450ff456a">Токен Практикум.Домашка</a></li>
+        <li><a href="https://core.telegram.org/bots#6-botfather">Токен телеграмм-бота</a></li>
         <li><code>  Ваш <i>telegram id</i> можно узнать у бота @userinfobot</code></li>
     </ul>
 </details>
