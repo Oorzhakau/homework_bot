@@ -29,14 +29,17 @@ pip install -r requirements.txt
 ```
 Создать файл .env в корне директории и внести в нее следующие переменные окружения:
 ```
-PRACTICUM_TOKEN = <[Токен Практикум.Домашка](https://oauth.yandex.ru/authorize?
-response_type=token&client_id=1d0b9dd4d652455a9eb710d450ff456a)>
-TELEGRAM_TOKEN = <[Токен телеграмм-бота](https://core.telegram.org/bots#6-botfather)>
+PRACTICUM_TOKEN = <Токен Практикум.Домашка>
+TELEGRAM_TOKEN = <Токен телеграмм-бота>
 TELEGRAM_CHAT_ID = <Ваш telegram id>
 ```
-<details><summary>Help про ваш telegram id</summary>
-    <br>
-    <code>  Ваш <i>telegram id</i> можно узнать у бота @userinfobot</code>
+<details><summary>Help по токенам</summary>
+    <ul>
+        <li>[Токен Практикум.Домашка](https://oauth.yandex.ru/authorize?
+response_type=token&client_id=1d0b9dd4d652455a9eb710d450ff456a)</li>
+        <li>[Токен телеграмм-бота](https://core.telegram.org/bots#6-botfather)</li>
+        <li><code>  Ваш <i>telegram id</i> можно узнать у бота @userinfobot</code></li>
+    </ul>
 </details>
 
 Запустить проект:
