@@ -35,6 +35,7 @@ TELEGRAM_TOKEN = <[Токен телеграмм-бота](https://core.telegram
 TELEGRAM_CHAT_ID = <Ваш telegram id>
 ```
 <details><summary>Help про ваш telegram id</summary>
+    <br>
     <i>Ваш telegram id можно узнать у бота @userinfobot</i>
 </details>
 
